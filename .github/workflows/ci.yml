@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  offline-maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: python3 tools/check_security_audit_upstream.py --integrity-only
+      - run: python3 -m unittest discover -s tools -p 'test_*.py' -v
+      - name: Test pinned Cloudflare validators without network or secrets
+        shell: bash
+        run: |
+          audit_container="cf-validators-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker rm -f "$audit_container" >/dev/null 2>&1 || true' EXIT
+          timeout 60s docker run --rm --name "$audit_container" \
+            --network none --read-only --user 65534:65534 --cap-drop ALL \
+            --security-opt no-new-privileges --memory 256m --memory-swap 256m \
+            --cpus 1 --pids-limit 64 --ulimit fsize=8388608:8388608 \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=32m,mode=1777 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/vendor/cloudflare-security-audit-skill,dst=/vendor,readonly" \
+            --workdir /vendor --entrypoint /usr/bin/env \
+            node@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 \
+            -i PATH=/usr/local/bin:/usr/bin:/bin HOME=/tmp/aeion-audit TMPDIR=/tmp \
+            /usr/local/bin/node --test skills/security-audit/validate-findings.test.cjs \
+            skills/security-audit/validate-coverage-ledger.test.cjs
