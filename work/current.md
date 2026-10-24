@@ -1,5 +1,11 @@
 # Current work
 
+## Project coverage and research refresh — COMPLETE (2026-10-24)
+- Scope: compare current runtime/security approaches with the existing Æion contracts, clarify language/project coverage, and simplify public adoption docs.
+- Result: retained the 16 controls, checker and unchanged Cloudflare snapshot; added a project qualification guide and corrected stale Factory/CROA integration text.
+- Validation: 13 checker tests and 65 upstream validator tests passed; all 22 retained files verified; read-only upstream check still matched the pin. See [validation](ops-review-validation.md).
+- Next: qualify one exact OpenShell/platform/image/harness tuple, then the two authentication paths separately. No runtime, provider integration or automatic scanner was installed.
+
 ## Qualify Agentic OPS runtime — PLANNED
 - Owner decision: 2026-10-23, keep Factory and both Claude subscription-token and OpenRouter options; focus on the framework and research first.
 - State: runtime remains unimplemented; Cloudflare source-audit tooling is retained separately with explicit evidence and weekly maintenance instructions.
