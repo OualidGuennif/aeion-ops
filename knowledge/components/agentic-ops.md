@@ -247,17 +247,23 @@ findings only through trusted validation and scoped confidential ticketing.
 
 ### Planned implementation sequence
 
+OPS is already published as a standalone framework and maintenance toolkit. Keep Factory's
+method without copying its entire scaffold. Select project-specific source checks and retain
+coverage gaps using the [qualification guide](../operations/project-qualification.md).
+
 | Step | Concrete deliverable | Gate before the next step |
 | --- | --- | --- |
-| 0. Review this plan | Agree scope, control catalog, first platform and publication | Explicit approval to implement; GitHub visibility settled |
-| 1. Start from Factory | Generate from the public template pinned to the recorded commit; retain license/credits and Factory method | Existing knowledge/doc/hook checks pass; no optional automation enabled incidentally |
+| 0. Fix the first qualification scope | One project, host, runtime/image/harness tuple and required controls | Scope, enforcement owners and expected evidence recorded |
+| 1. Establish the repository baseline | Retain the existing standalone layout and Factory method; record source/tool revisions | OPS integrity and regression checks pass; no optional automation enabled incidentally |
 | 2. Qualify the local boundary | One versioned OpenShell/Docker reference configuration; preflight and synthetic negative checks | OPS-01–05, 08–10 and 16 demonstrated on the declared host; limitations recorded |
 | 3. Qualify both auth paths | User-scoped credential setup instructions and two minimal fixtures | Both authenticate/recreate; OPS-06/07 status explicit for each; no real secrets in tests |
 | 4. Prove a real coding task | Small repository fixture with dependencies and tests, plus malicious-content fixture | Useful edits/tests succeed; boundary violations fail; artifacts export safely |
 | 5. Add evidence and usage | Local bounded evidence plus optional OTLP, protocol-specific usage fixtures | OPS-14/15; retries, missing usage and costs handled honestly |
 | 6. Delivery and public v0 | Protected CI, recovery runbooks and exact support matrix | Factory review gates and applicable OPS controls pass; no unsupported guarantee in README |
 
-For Factory adoption, reuse its existing validation commands: `tools/knowledge/knowledge-check`,
+OPS baseline commands are `python3 tools/check_security_audit_upstream.py --integrity-only` and
+`python3 -m unittest discover -s tools -p 'test_*.py' -v`. In projects that adopt the Factory
+scaffold, reuse its validation commands there: `tools/knowledge/knowledge-check`,
 `tools/knowledge/doc-links`, `tools/repo-health/repo-health`,
 `python3 tools/knowledge/tests/test_doc_links.py`, and `python3 .claude/hooks/test_hooks.py`.
 These prove repository conventions only; they do not prove a runtime boundary.
@@ -291,9 +297,9 @@ satisfy required release controls. The support matrix is per runtime, platform a
 
 ### Proposed repository additions after approval
 
-Keep Factory's layout. Add the component spec and source register, `infra/` for reviewed runtime
-configuration, and targeted tools/tests for preflight and qualification. Add files when their
-slice needs them; avoid an empty adapter hierarchy or service skeleton.
+Keep the current layout, component spec and source register. Add `infra/` for reviewed runtime
+configuration and targeted tools/tests for preflight and qualification only when that slice
+needs them; avoid an empty adapter hierarchy or service skeleton.
 
 Runbooks must cover credential setup/rotation, policy exceptions, failed admission, cancellation,
 cleanup failure, suspected exfiltration, dependency/image updates and safe artifact recovery.

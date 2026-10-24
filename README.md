@@ -1,26 +1,21 @@
 # Æion OPS
 
-**Security and operations directives for coding agents — independently usable.**
+**Define what a coding agent may access, execute and export.**
 
-Use OPS to define what an agent may read, write, call, spend and export. Apply the directives
-to an existing workflow, or combine them with other Æion modules. No other Æion checkout is
-required for the documentation or the local maintenance tool.
+OPS is a security framework and a small maintenance toolkit for agent workflows. Use it on
+its own, with your existing development method, or with [Æion Factory](https://github.com/OualidGuennif/aeion-factory).
 
-**Available:** the 16-control framework, source research, the complete pinned Cloudflare audit
-skill and a tested integrity/upstream checker. **Planned:** a qualified sandbox, credential
-mediation and live provider integrations. This repository does not currently enforce isolation.
+- **16 controls** for files, network, credentials, resources, artifacts and cleanup.
+- **A pinned Cloudflare security-audit toolkit**, including its instructions and validators.
+- **A local checker** for toolkit integrity and read-only upstream change detection.
 
-Part of the modular [Æion SpaceShip framework](https://github.com/OualidGuennif/aeion-spaceship).
-[Factory](https://github.com/OualidGuennif/aeion-factory) ·
-[OPS](https://github.com/OualidGuennif/aeion-ops) ·
-[CROA](https://github.com/OualidGuennif/aeion-croa) ·
-[Observability](https://github.com/OualidGuennif/aeion-observability) ·
-[SpaceShip](https://github.com/OualidGuennif/aeion-spaceship).
-See the [module comparison and examples](https://github.com/OualidGuennif/aeion-spaceship/blob/main/docs/modules.md).
+**Status:** the framework and maintenance tools are available. Runtime enforcement, credential
+mediation and provider integrations still need implementation and qualification. Cloning OPS
+does not isolate an agent or run a security audit.
 
-## Try the local tool
+## Try it
 
-Python 3.9+ and the standard library are sufficient. No provider key, Docker or model call is needed:
+Python 3.9+; standard library only. No provider key or Docker needed:
 
 ```sh
 git clone https://github.com/OualidGuennif/aeion-ops.git
@@ -28,34 +23,30 @@ cd aeion-ops
 python3 tools/check_security_audit_upstream.py --integrity-only
 ```
 
-Expected: `integrity_verified`, `files_verified: 22`, and `upstream_freshness: not_checked`.
-This verifies the retained source bytes. It does not run an audit or establish sandbox security.
+Expected: `integrity_verified`, `files_verified: 22`, `upstream_freshness: not_checked`.
+This verifies the bundled source bytes.
 
-For the **at least weekly** read-only upstream check, install/configure `gh` as the operator and
-run `python3 tools/check_security_audit_upstream.py --remote`. Exit `0` is current, `2` is a new
-upstream commit, and `3` is unknown/error. No automatic updater or scheduler is installed.
+To check upstream at least weekly, configure GitHub CLI (`gh`) as the operator, then run
+`python3 tools/check_security_audit_upstream.py --remote`. It reads metadata and never updates
+the toolkit. Exit `0`: current; `2`: update available; `3`: unknown/error.
+Follow the [maintenance runbook](knowledge/operations/cloudflare-security-audit.md) for review and evidence.
 
-## Apply the framework
+## Use it in a project
 
-1. Read the [execution contract](knowledge/components/agentic-ops.md) and choose your required controls.
-2. Define task paths, allowed destinations, resource/deadline limits and credential handling.
-3. Qualify the exact runtime/platform/harness/authentication combination against the checks.
-4. Keep unsupported controls visible; do not treat a Docker configuration example as proof.
+1. Choose the required [controls](knowledge/components/agentic-ops.md) and define allowed paths, destinations and limits.
+2. Follow the [project qualification guide](knowledge/operations/project-qualification.md) to record checks and gaps.
+3. Qualify the exact runtime, platform, harness and authentication path before relying on enforcement.
 
-Both Claude subscription tokens and OpenRouter remain planned authentication paths. Their
-credential-isolation and billing guarantees differ and need separate qualification. Factory is
-the shared development method; you can also use these directives with your existing method.
+Controls apply across languages. Source-audit coverage depends on the actual files, frameworks
+and trust boundaries reviewed. An unsupported or skipped area remains a visible gap.
+Claude subscription tokens and OpenRouter are separate planned paths with separate qualification.
 
 ## Read next
 
-| Document | Purpose |
-| --- | --- |
-| [Framework](knowledge/components/agentic-ops.md) | Controls, boundaries and acceptance checks |
-| [Research](knowledge/references/agentic-ops-research.md) | Primary sources, runtime comparisons and limitations |
-| [Cloudflare integration](knowledge/operations/cloudflare-security-audit.md) | Complete snapshot, safe invocation and weekly maintenance |
-| [Validation](work/cloudflare-validation.md) | Actual integrity and validator test evidence |
-| [Credits](CREDITS.md) | Upstream attribution and preserved licence |
+- [Framework and implementation plan](knowledge/components/agentic-ops.md)
+- [Research and primary sources](knowledge/references/agentic-ops-research.md)
+- [Cloudflare integration](knowledge/operations/cloudflare-security-audit.md) · [validation evidence](work/cloudflare-validation.md)
+- [Æion modules and responsibilities](https://github.com/OualidGuennif/aeion-spaceship/blob/main/docs/modules.md)
 
-Original Æion material is [MIT](LICENSE). Vendored upstream content retains its own licence.
-Research baseline: **2026-10-23**. Run local regression checks with
-`python3 -m unittest discover -s tools -p 'test_*.py' -v`.
+Run local regression checks: `python3 -m unittest discover -s tools -p 'test_*.py' -v`.
+Original material: [MIT](LICENSE). Upstream material retains its own licence; see [credits](CREDITS.md).

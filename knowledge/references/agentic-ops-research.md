@@ -56,7 +56,8 @@ it should not silently become the public baseline. [F1]
 
 OPS should reuse those conventions. Factory hooks guide behavior and catch errors; the operating
 system, runtime, receiving service, and protected configuration must enforce permissions even
-when the agent ignores repository instructions. CROA's definition and API remain unspecified.
+when the agent ignores repository instructions. The sibling CROA module now provides a separate
+offline evidence-assessment kit; it neither enforces these controls nor grants runtime authority.
 
 ## Runtime comparison
 
@@ -284,7 +285,23 @@ is not redistributed. IDs are local research references, not external standard c
 3. Which provider usage fields survive the actual Claude Code/OpenRouter protocol path.
 4. Which inference settings the selected harness can set and the serving endpoint can confirm.
 5. End-to-end limits under concurrent requests, abrupt disconnects, and revocation.
-6. GitHub visibility and approval to move from the requested planning phase to implementation.
+6. The first bounded runtime qualification scope; publication is complete, runtime work remains planned.
 
 These are implementation qualification tasks. No existing entry in this research is a claim
 that Æion already implements or passes the corresponding control.
+
+## Follow-up review — 2026-10-24
+
+The 16 controls remain appropriate; the next useful step is one measured runtime slice. The
+[project qualification guide](../operations/project-qualification.md) separates file/tool integrity,
+source-audit coverage and execution enforcement, including language and extension gaps.
+
+OpenShell still lists v0.1.5 as stable. NVIDIA's [August security bulletin](https://nvidia.custhelp.com/app/answers/detail/a_id/5872)
+lists affected OpenShell releases through v0.0.33 and fixes in v0.0.34; it does not establish that
+v0.1.5 is affected. Check current advisories and effective configuration before qualification.
+This source review neither installs the runtime nor establishes the absence of other vulnerabilities.
+
+The two pinned provider examples still differ from the desired pair: Claude Code uses API-key
+mapping, while OpenRouter names OpenCode. The existing compatibility warning remains necessary.
+The public Factory pin above is historical research provenance, not a requirement to generate
+a new OPS repository. Follow the current project's checked method and versioned evidence.

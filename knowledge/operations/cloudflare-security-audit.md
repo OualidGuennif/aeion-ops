@@ -76,6 +76,12 @@ or unknown/error. Its release field covers the first ten returned releases; revi
 release/tag history separately when necessary. The checked default-branch SHA is the main
 change detector. These are upstream checks, not supply-chain attestation or target auditing.
 
+`current` means the checked default-branch commit matches the retained pin. The tool does not
+review advisories, instruction changes or licences, and the local lock is not an independent
+signature. The maintainer completes those review steps and records their scope separately.
+For project/language coverage, use the [qualification guide](project-qualification.md); an
+unchanged complete toolkit is not evidence that a target's whole source tree was audited.
+
 Keep each remote JSON result as maintenance evidence. The source lock's original date remains
 the snapshot provenance; a later successful check belongs in that journal, not an invented
 new vendoring date. A network failure remains unknown and needs retry before the deadline.
