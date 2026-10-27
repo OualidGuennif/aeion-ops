@@ -63,16 +63,16 @@ production services solely because a research check is overdue.
 
 ```sh
 python3 tools/check_security_audit_upstream.py --integrity-only
-python3 tools/check_security_audit_upstream.py
 python3 tools/check_security_audit_upstream.py --remote
 ```
 
-`--integrity-only` verifies pinned bytes without checking freshness; it returns `integrity_verified`
-and never renews the weekly check. The default checks local inventory and recorded age.
-`--remote` uses authenticated `gh` only
-for read-only public metadata. Neither prints credentials nor executes upstream code. Exit
-`0` means integrity verified/current as labelled, `2` means update available, `3` means stale
-or unknown/error. Its release field covers the first ten returned releases; review full
+`--integrity-only` (also the default) verifies pinned bytes without checking freshness; it returns
+`integrity_verified` and never renews the weekly check. The checker does not read the maintenance
+journal, so it cannot report whether a weekly check is overdue; the journal's recorded deadline
+decides that. `--remote` uses authenticated `gh` only for read-only public metadata and reports
+`checked_at` and `next_check_due` for the journal. Neither mode prints credentials nor executes
+upstream code. Exit `0` means integrity verified/current as labelled, `2` means update available,
+`3` means unknown/error. Its release field covers the first ten returned releases; review full
 release/tag history separately when necessary. The checked default-branch SHA is the main
 change detector. These are upstream checks, not supply-chain attestation or target auditing.
 

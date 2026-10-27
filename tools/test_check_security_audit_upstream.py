@@ -1,4 +1,4 @@
-"""Regression checks for local integrity and weekly freshness behavior."""
+"""Regression checks for local integrity and read-only upstream checks."""
 
 import datetime as dt
 import hashlib
@@ -10,6 +10,8 @@ from unittest.mock import patch
 from contextlib import redirect_stdout
 import io
 import json
+import shutil
+import subprocess
 
 
 spec = importlib.util.spec_from_file_location("checker", Path(__file__).with_name("check_security_audit_upstream.py"))
@@ -78,32 +80,39 @@ class SnapshotTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     checker.verify_snapshot(self.lock, self.root)
 
-    def test_weekly_boundary_and_offline_does_not_refresh(self):
-        with patch.object(checker, "VENDOR", self.root):
-            fresh = checker.inspect(self.lock, now=dt.datetime(2026, 10, 29, 23, 59, tzinfo=dt.timezone.utc))
-            stale = checker.inspect(self.lock, now=dt.datetime(2026, 10, 30, tzinfo=dt.timezone.utc))
-        self.assertFalse(fresh["weekly_check_due"])
-        self.assertEqual(stale["status"], "stale")
-        self.assertFalse(stale["network_checked"])
+    def test_default_cli_is_integrity_only(self):
+        output = io.StringIO()
+        with patch.object(checker, "LOCK") as lock, patch.object(checker, "VENDOR", self.root):
+            lock.read_text.return_value = json.dumps(self.lock)
+            with patch.object(checker, "github_json") as remote, patch.object(checker.sys, "argv", ["checker"]):
+                with redirect_stdout(output):
+                    result = checker.main()
+        self.assertEqual(result, 0)
+        self.assertEqual(json.loads(output.getvalue())["status"], "integrity_verified")
+        remote.assert_not_called()
 
-    def test_future_record_rejected(self):
-        with patch.object(checker, "VENDOR", self.root):
-            with self.assertRaises(ValueError):
-                checker.inspect(self.lock, now=dt.datetime(2026, 10, 22, tzinfo=dt.timezone.utc))
+    @unittest.skipUnless((checker.ROOT / ".git").exists() and shutil.which("git"), "requires a git checkout")
+    def test_pinned_modes_match_git_index(self):
+        lock = json.loads(checker.LOCK.read_text())
+        listing = subprocess.run(["git", "ls-files", "--stage", "--", "vendor/cloudflare-security-audit-skill"],
+                                 cwd=checker.ROOT, capture_output=True, text=True, check=True).stdout
+        prefix = "vendor/cloudflare-security-audit-skill/"
+        tracked = {line.split("\t", 1)[1][len(prefix):]: line.split()[0] for line in listing.splitlines()}
+        self.assertEqual(tracked, {entry["path"]: entry["mode"] for entry in lock["files"]})
 
     def test_remote_current_and_update(self):
         for commit, expected in [("a" * 40, "current"), ("b" * 40, "update_available")]:
             with self.subTest(commit=commit), patch.object(checker, "VENDOR", self.root):
                 with patch.object(checker, "github_json", side_effect=[{"default_branch": "main"}, {"sha": commit}, []]):
-                    result = checker.inspect(self.lock, remote=True)
+                    result = checker.inspect(self.lock, now=dt.datetime(2026, 10, 27, tzinfo=dt.timezone.utc))
             self.assertEqual(result["status"], expected)
             self.assertTrue(result["network_checked"])
-            self.assertFalse(result["weekly_check_due"])
+            self.assertEqual(result["next_check_due"], "2026-11-03T00:00:00+00:00")
 
     def test_remote_error_is_not_a_successful_refresh(self):
         with patch.object(checker, "VENDOR", self.root), patch.object(checker, "github_json", side_effect=OSError):
             with self.assertRaises(OSError):
-                checker.inspect(self.lock, remote=True)
+                checker.inspect(self.lock)
 
 
 if __name__ == "__main__":
