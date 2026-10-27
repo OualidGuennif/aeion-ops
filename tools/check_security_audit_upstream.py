@@ -27,11 +27,11 @@ def verify_snapshot(lock, directory):
     expected = set()
     for entry in lock["files"]:
         name = entry["path"]
-        path = PurePosixPath(name)
-        if (not isinstance(name, str) or not name or path.is_absolute()
+        if (not isinstance(name, str) or not name or name.startswith("/")
                 or any(part in {"", ".", ".."} for part in name.split("/"))
                 or "\\" in name or name in expected):
             raise ValueError("Invalid or duplicated manifest path")
+        path = PurePosixPath(name)
         expected.add(name)
         target = directory
         for part in path.parts:
@@ -63,19 +63,10 @@ def github_json(endpoint):
     return json.loads(result.stdout)
 
 
-def inspect(lock, remote=False, now=None):
+def inspect(lock, now=None):
+    """Compare the pin with upstream metadata; the lock date is provenance, not check history."""
     now = now or dt.datetime.now(dt.timezone.utc)
-    checked = dt.datetime.combine(dt.date.fromisoformat(lock["checked_at"]), dt.time(), dt.timezone.utc)
-    age = (now - checked).total_seconds()
-    report = {"schema_version": 1, "repository": lock["repository"], "pinned_commit": lock["commit"],
-              "last_recorded_check": lock["checked_at"], "weekly_check_due": age >= 7 * 86400,
-              "network_checked": False, "status": "stale" if age >= 7 * 86400 else "snapshot_verified",
-              "files_verified": verify_snapshot(lock, VENDOR),
-              "checked_at": now.isoformat(), "latest_release": None}
-    if age < 0:
-        raise ValueError("Recorded check is in the future")
-    if not remote:
-        return report
+    files_verified = verify_snapshot(lock, VENDOR)
     # Fixed repository identity: the lock file cannot redirect authenticated requests elsewhere.
     if lock["repository"] != "https://github.com/cloudflare/security-audit-skill":
         raise ValueError("Unexpected upstream repository")
@@ -89,32 +80,34 @@ def inspect(lock, remote=False, now=None):
     if not re.fullmatch(r"[0-9a-f]{40}", head["sha"]) or not isinstance(releases, list):
         raise ValueError("Unexpected GitHub response")
     stable = [r for r in releases if not r["draft"] and not r["prerelease"]]
-    report.update(network_checked=True, upstream_commit=head["sha"],
-                  upstream_default_branch=branch, weekly_check_due=False,
-                  status="current" if head["sha"] == lock["commit"] else "update_available",
-                  latest_release=stable[0]["tag_name"] if stable else None)
-    return report
+    return {"schema_version": 2, "repository": lock["repository"], "pinned_commit": lock["commit"],
+            "status": "current" if head["sha"] == lock["commit"] else "update_available",
+            "files_verified": files_verified, "network_checked": True,
+            "upstream_commit": head["sha"], "upstream_default_branch": branch,
+            "latest_release": stable[0]["tag_name"] if stable else None,
+            "checked_at": now.isoformat(), "next_check_due": (now + dt.timedelta(days=7)).isoformat()}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--remote", action="store_true", help="Read GitHub metadata via gh; never update files")
-    mode.add_argument("--integrity-only", action="store_true", help="Verify pinned local bytes; do not assess upstream freshness")
+    mode.add_argument("--integrity-only", action="store_true",
+                      help="Verify pinned local bytes; do not assess upstream freshness (default)")
     args = parser.parse_args()
     try:
         lock = json.loads(LOCK.read_text())
-        if args.integrity_only:
+        if args.remote:
+            report = inspect(lock)
+        else:
             report = {"status": "integrity_verified", "files_verified": verify_snapshot(lock, VENDOR),
                       "network_checked": False, "upstream_freshness": "not_checked"}
-        else:
-            report = inspect(lock, args.remote)
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         # Do not print command stderr, environment or authenticated request material.
         print(json.dumps({"status": "unknown", "error_type": type(error).__name__}))
         return 3
     print(json.dumps(report, indent=2))
-    return {"integrity_verified": 0, "snapshot_verified": 0, "current": 0, "update_available": 2, "stale": 3}[report["status"]]
+    return {"integrity_verified": 0, "current": 0, "update_available": 2}[report["status"]]
 
 
 if __name__ == "__main__":

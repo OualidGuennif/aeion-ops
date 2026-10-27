@@ -1,5 +1,10 @@
 # Current work
 
+## Checker freshness and vendor modes — COMPLETE (2026-10-27)
+- Scope: the offline default mode judged freshness from the lock's provenance date, so it would report `stale` permanently after 2026-10-30 even with weekly remote checks; two validators were tracked `100644` although the lock pins `100755`.
+- Result: the default mode is now integrity-only; `--remote` reports `checked_at`/`next_check_due` for the maintenance journal, which alone records freshness. Restored the pinned validator modes; contents unchanged.
+- Validation: 13 checker tests passed on Python 3.9, 3.11, 3.12 and 3.13, including a new git-index mode check; 22 files verified. No remote check succeeded here (`gh` unavailable), so the existing weekly deadline still stands.
+
 ## Project coverage and research refresh — COMPLETE (2026-10-24)
 - Scope: compare current runtime/security approaches with the existing Æion contracts, clarify language/project coverage, and simplify public adoption docs.
 - Result: retained the 16 controls, checker and unchanged Cloudflare snapshot; added a project qualification guide and corrected stale Factory/CROA integration text.
